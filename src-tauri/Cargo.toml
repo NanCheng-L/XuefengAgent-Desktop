@@ -1,0 +1,25 @@
+[package]
+name = "xuefeng-agent-desktop"
+version = "0.1.0"
+description = "雪峰Agent桌面版 — AI高考志愿顾问"
+authors = ["you"]
+edition = "2021"
+
+[lib]
+name = "xuefeng_agent_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-opener = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+rusqlite = { version = "0.32", features = ["bundled"] }
+reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-features = false }
+tokio = { version = "1", features = ["full"] }
+flate2 = "1"
+scraper = "0.22"
+url = "2"
