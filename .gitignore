@@ -23,6 +23,5 @@ dist-ssr
 *.sln
 *.sw?
 
-# Database files (too large)
+# Database files
 src-tauri/resources/admission_clean.db
-src-tauri/resources/admission_clean.db.gz
