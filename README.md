@@ -3,6 +3,14 @@
 > 基于 [xuefeng-agent](https://github.com/ziqihe10-droid/xuefeng-agent) 改造的 Tauri 2 桌面应用。
 > 内置官方录取数据库，安装即用，无需 Python 依赖。
 
+## 下载
+
+[![GitHub Release](https://img.shields.io/github/v/release/NanCheng-L/XuefengAgent-Desktop)](https://github.com/NanCheng-L/XuefengAgent-Desktop/releases/latest)
+
+👉 **[点击下载最新版本](https://github.com/NanCheng-L/XuefengAgent-Desktop/releases/latest)**
+
+> 进入下载页面后，找到 `.exe` 后缀的文件（如 `XuefengAgent-Desktop_0.1.1_x64-setup.exe`），点击下载并双击运行安装。
+
 ## 功能特性
 
 - **本地数据库**: 8 省 × 2024-2025 年官方投档线，约 26 万条，位次精确匹配
