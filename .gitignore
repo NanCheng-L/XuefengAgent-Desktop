@@ -25,3 +25,6 @@ dist-ssr
 
 # Database files
 src-tauri/resources/admission_clean.db
+
+# Signing keys (private key must not be committed)
+src-tauri/tauri.key

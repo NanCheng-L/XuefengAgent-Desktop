@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
 import { openUrl } from '@tauri-apps/plugin-opener';
+import { getVersion } from '@tauri-apps/api/app';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import UpdateChecker from '../components/UpdateChecker.vue';
 
@@ -12,7 +13,7 @@ if (savedTheme === 'dark') {
   delete document.documentElement.dataset.theme;
 }
 
-const version = ref('0.1.0');
+const version = ref('');
 const hasUpdate = ref(false);
 const chatCount = ref(0);
 
@@ -57,9 +58,10 @@ function onStorage(e: StorageEvent) {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   loadData();
   window.addEventListener('storage', onStorage);
+  try { version.value = await getVersion(); } catch {}
 });
 
 onUnmounted(() => {

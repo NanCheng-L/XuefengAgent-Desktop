@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import { getVersion } from '@tauri-apps/api/app';
 import type { Chat } from '../types';
 
 const props = defineProps<{
@@ -15,6 +16,12 @@ const emit = defineEmits<{
   (e: 'create'): void;
   (e: 'delete', id: string): void;
 }>();
+
+const currentVersion = ref('');
+
+onMounted(async () => {
+  try { currentVersion.value = await getVersion(); } catch {}
+});
 
 const filteredChats = computed(() => {
   return Object.values(props.chats).filter(chat => chat.mode === props.mode);
@@ -35,7 +42,7 @@ function getPreview(chat: Chat): string {
       <img src="/icon.png" class="app-icon" alt="icon">
       <div class="sidebar-header-text">
         <h2>雪峰Agent</h2>
-        <span class="version">v0.1.0</span>
+        <span class="version">v{{ currentVersion }}</span>
         <span v-if="hasUpdate" class="update-badge">NEW</span>
       </div>
     </div>
