@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Database files (too large)
+src-tauri/resources/admission_clean.db
+src-tauri/resources/admission_clean.db.gz
