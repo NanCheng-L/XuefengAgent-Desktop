@@ -10,6 +10,8 @@
 👉 **[点击下载最新版本](https://github.com/NanCheng-L/XuefengAgent-Desktop/releases/latest)**
 
 > 进入下载页面后，找到 `.exe` 后缀的文件（如 `XuefengAgent-Desktop_0.1.1_x64-setup.exe`），点击下载并双击运行安装。
+> <img width="1280" height="998" alt="34418a6a-efa4-4242-b215-dcd7012a8b8f" src="https://github.com/user-attachments/assets/c096c5ac-5698-422d-a99f-250315097b8f" />
+
 
 ## 功能特性
 
