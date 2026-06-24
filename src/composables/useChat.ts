@@ -108,6 +108,20 @@ export function useChat() {
     saveToStorage();
   }
 
+  function deleteMessage(index: number) {
+    const chat = chats[currentId.value];
+    if (!chat) return;
+    if (index < 0 || index >= chat.messages.length) return;
+    if (isLoading.value) return;
+    const msg = chat.messages[index];
+    if (msg.role === 'user' && index + 1 < chat.messages.length && chat.messages[index + 1].role === 'assistant') {
+      chat.messages.splice(index, 2);
+    } else {
+      chat.messages.splice(index, 1);
+    }
+    saveToStorage();
+  }
+
   function switchChat(id: string) {
     currentId.value = id;
     if (chats[id] && chats[id].mode !== mode.value) {
@@ -411,7 +425,7 @@ export function useChat() {
   return {
     chats, currentId, mode, isLoading, dbReady, config,
     currentChat, currentMessages,
-    createChat, deleteChat, switchChat, setMode, setConfig,
+    createChat, deleteChat, deleteMessage, switchChat, setMode, setConfig,
     sendMessage, init, checkServer: checkDb
   };
 }

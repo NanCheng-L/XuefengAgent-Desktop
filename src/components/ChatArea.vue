@@ -9,6 +9,10 @@ const props = defineProps<{
   isLoading: boolean;
 }>();
 
+const emit = defineEmits<{
+  (e: 'delete', index: number): void;
+}>();
+
 const scrollRef = ref<HTMLElement>();
 
 const welcomeIcon = computed(() => props.mode === 'fun' ? '🎭' : '🎓');
@@ -18,6 +22,22 @@ const isFunMode = computed(() => props.mode === 'fun');
 function getRoleName(msg: ChatMessage): string {
   if (msg.role === 'user') return '你';
   return props.mode === 'fun' ? '张雪峰' : '顾问';
+}
+
+const contextMenu = ref({ show: false, x: 0, y: 0, index: -1 });
+
+function onContextMenu(e: MouseEvent, index: number) {
+  e.preventDefault();
+  contextMenu.value = { show: true, x: e.clientX, y: e.clientY, index };
+}
+
+function closeContextMenu() {
+  contextMenu.value.show = false;
+}
+
+function handleDelete() {
+  emit('delete', contextMenu.value.index);
+  closeContextMenu();
 }
 
 watch(() => props.messages.length, async () => {
@@ -32,7 +52,7 @@ watch(() => props.isLoading, async () => {
 </script>
 
 <template>
-  <div class="chat-area" :class="{ 'fun-mode': isFunMode }" ref="scrollRef">
+  <div class="chat-area" :class="{ 'fun-mode': isFunMode }" ref="scrollRef" @click="closeContextMenu">
     <div v-if="messages.length === 0" class="welcome">
       <div class="icon">{{ welcomeIcon }}</div>
       <h2>{{ welcomeTitle }}</h2>
@@ -46,6 +66,7 @@ watch(() => props.isLoading, async () => {
         :key="index"
         class="message dark"
         :class="msg.role === 'user' ? 'user' : 'assistant'"
+        @contextmenu="onContextMenu($event, index)"
       >
         <div v-if="msg.role !== 'user'" class="role">{{ getRoleName(msg) }}</div>
         <div v-if="msg.role === 'user'" class="content">{{ msg.content }}</div>
@@ -61,6 +82,16 @@ watch(() => props.isLoading, async () => {
         </div>
       </div>
     </div>
+
+    <Teleport to="body">
+      <div
+        v-if="contextMenu.show"
+        class="context-menu"
+        :style="{ left: contextMenu.x + 'px', top: contextMenu.y + 'px' }"
+      >
+        <div class="context-menu-item" @click="handleDelete">删除</div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -101,6 +132,7 @@ watch(() => props.isLoading, async () => {
   line-height: 1.5;
   word-break: break-word;
   animation: fadeIn 0.2s ease;
+  cursor: default;
 }
 
 @keyframes fadeIn {
@@ -148,5 +180,31 @@ watch(() => props.isLoading, async () => {
 @keyframes dot {
   0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
   40% { transform: scale(1); opacity: 1; }
+}
+</style>
+
+<style>
+.context-menu {
+  position: fixed;
+  z-index: 9999;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 4px 0;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  min-width: 80px;
+}
+
+.context-menu-item {
+  padding: 8px 16px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.context-menu-item:hover {
+  background: var(--danger);
+  color: #fff;
 }
 </style>

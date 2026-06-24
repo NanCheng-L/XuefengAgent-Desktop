@@ -10,7 +10,7 @@ import { useChat } from './composables/useChat';
 const {
   chats, currentId, mode, isLoading, dbReady,
   currentMessages,
-  createChat, deleteChat, switchChat, setMode,
+  createChat, deleteChat, deleteMessage, switchChat, setMode,
   sendMessage, init
 } = useChat();
 
@@ -74,6 +74,7 @@ onMounted(() => {
         :messages="currentMessages"
         :mode="mode"
         :is-loading="isLoading"
+        @delete="deleteMessage"
       />
 
       <InputBox @send="sendMessage" :disabled="isLoading" :mode="mode" />
