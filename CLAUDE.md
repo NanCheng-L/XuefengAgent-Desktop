@@ -8,6 +8,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 代码注释使用中文
 - 错误提示使用中文
 
+## 红线（必须遵守）
+
+- **git add、git commit 只有用户明确说"提交 git"时才执行，不要主动提交**
+- **不要自己提交代码，必须等用户说"提交代码"**
+- **删除文件、删除目录、修改 .env、密钥、token、数据库 schema 变更前必须先问用户**
+
 ## 项目概述
 
 雪峰Agent桌面版是一款 AI 高考志愿顾问桌面应用，基于 xuefeng-agent 项目改造。内置 8 省官方录取数据库（约 26 万条），支持 AI 智能志愿推荐、联网搜索、多轮对话等功能。
@@ -90,4 +96,3 @@ vue-tsc --noEmit                # TypeScript 类型检查
 - 数据库文件 `admission_clean.db.gz` 放在 `src-tauri/resources/`
 - API Key 存储在浏览器 localStorage，不上传服务器
 - URL 自动处理 `/v1` 重复拼接（如小米 MiMo 的 URL 已含 `/v1`）
-- **git add、git commit 只有用户明确说"提交 git"时才执行，不要主动提交**
