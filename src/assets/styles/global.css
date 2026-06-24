@@ -1,0 +1,68 @@
+/* 浅色主题 - 奶油白 + 橘色 */
+:root {
+  --bg: #F5EDE4;
+  --surface: #FFFFFF;
+  --card: #FFFFFF;
+  --border: #C8B8A5;
+  --text: #1A1008;
+  --text-secondary: #4A3D30;
+  --text-muted: #7A6A58;
+  --primary: #D97A3C;
+  --primary-hover: #c56a2e;
+  --success: #16a34a;
+  --danger: #DC2626;
+}
+
+/* 深色主题 - 黑色 + 绿色 */
+:root[data-theme="dark"] {
+  --bg: #0a0a0a;
+  --surface: #111111;
+  --card: #1a1a1a;
+  --border: #1e1e1e;
+  --text: #e5e5e5;
+  --text-secondary: #999;
+  --text-muted: #666;
+  --primary: #10b981;
+  --primary-hover: #0ea572;
+  --success: #10b981;
+  --danger: #ef4444;
+}
+
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, div, span, h1, h2, h3, h4, h5, h6, p, pre,
+a, abbr, code, img, ol, ul, li, fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, footer, header, menu, nav, section, blockquote, cite, q {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  font: inherit;
+  vertical-align: baseline;
+}
+
+ol, ul { list-style: none; }
+blockquote, q { quotes: none; }
+table { border-collapse: collapse; border-spacing: 0; }
+img { max-width: 100%; }
+a { text-decoration: none; color: inherit; }
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font: 14px/1.6 -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }

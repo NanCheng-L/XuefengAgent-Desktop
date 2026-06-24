@@ -6,6 +6,8 @@ use std::io::Read;
 use std::path::PathBuf;
 use std::sync::Mutex;
 use tauri::Manager;
+use tauri::tray::{TrayIconBuilder, MouseButton, MouseButtonState, TrayIconEvent};
+use tauri::menu::{MenuBuilder, MenuItemBuilder};
 
 struct AppState {
     db_path: Mutex<Option<PathBuf>>,
@@ -51,28 +53,48 @@ struct SearchResults {
 }
 
 fn get_db_path(app: &tauri::AppHandle) -> PathBuf {
-    let resource_dir = app
-        .path()
-        .resource_dir()
-        .expect("failed to get resource dir");
-    let db_path = resource_dir.join("resources").join("admission_clean.db");
-    let gz_path = resource_dir.join("resources").join("admission_clean.db.gz");
+    // 优先使用 resource_dir
+    if let Ok(resource_dir) = app.path().resource_dir() {
+        let db_path = resource_dir.join("resources").join("admission_clean.db");
+        let gz_path = resource_dir.join("resources").join("admission_clean.db.gz");
+        if !db_path.exists() && gz_path.exists() {
+            let mut gz = fs::File::open(&gz_path).expect("failed to open gz");
+            let mut decoder = GzDecoder::new(&mut gz);
+            let mut buf = Vec::new();
+            decoder.read_to_end(&mut buf).expect("failed to decompress");
+            fs::write(&db_path, buf).expect("failed to write db");
+        }
+        if db_path.exists() {
+            return db_path;
+        }
+    }
 
-    if !db_path.exists() && gz_path.exists() {
-        let mut gz = fs::File::open(&gz_path).expect("failed to open gz");
+    // dev 模式 fallback: 从 src-tauri/resources/ 读取
+    let dev_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("resources")
+        .join("admission_clean.db");
+    let dev_gz = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("resources")
+        .join("admission_clean.db.gz");
+    if !dev_path.exists() && dev_gz.exists() {
+        let mut gz = fs::File::open(&dev_gz).expect("failed to open gz");
         let mut decoder = GzDecoder::new(&mut gz);
         let mut buf = Vec::new();
         decoder.read_to_end(&mut buf).expect("failed to decompress");
-        fs::write(&db_path, buf).expect("failed to write db");
+        fs::write(&dev_path, buf).expect("failed to write db");
     }
-
-    db_path
+    dev_path
 }
 
 fn init_db(app: &tauri::AppHandle, state: &AppState) {
     let db_path = get_db_path(app);
+    println!("[DB] path: {:?}", db_path);
+    println!("[DB] exists: {}", db_path.exists());
     if db_path.exists() {
         *state.db_path.lock().unwrap() = Some(db_path);
+        println!("[DB] loaded successfully");
+    } else {
+        println!("[DB] FAILED: database not found");
     }
 }
 
@@ -464,6 +486,7 @@ async fn search_tavily(query: String, api_key: String, max_results: usize) -> Re
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(AppState {
             db_path: Mutex::new(None),
         })
@@ -477,7 +500,68 @@ pub fn run() {
         .setup(|app| {
             let state = app.state::<AppState>();
             init_db(app.handle(), &state);
+
+            // 系统托盘菜单
+            let show_item = MenuItemBuilder::with_id("show", "显示窗口").build(app)?;
+            let hide_item = MenuItemBuilder::with_id("hide", "隐藏窗口").build(app)?;
+            let quit_item = MenuItemBuilder::with_id("quit", "退出").build(app)?;
+            let tray_menu = MenuBuilder::new(app)
+                .item(&show_item)
+                .item(&hide_item)
+                .separator()
+                .item(&quit_item)
+                .build()?;
+
+            let _tray = TrayIconBuilder::new()
+                .icon(app.default_window_icon().unwrap().clone())
+                .tooltip("雪峰Agent - AI高考志愿顾问")
+                .menu(&tray_menu)
+                .show_menu_on_left_click(false)
+                .on_menu_event(move |app, event| {
+                    match event.id().as_ref() {
+                        "show" => {
+                            if let Some(window) = app.get_webview_window("main") {
+                                let _ = window.unminimize();
+                                let _ = window.show();
+                                let _ = window.set_focus();
+                            }
+                        }
+                        "hide" => {
+                            if let Some(window) = app.get_webview_window("main") {
+                                let _ = window.hide();
+                            }
+                        }
+                        "quit" => {
+                            std::process::exit(0);
+                        }
+                        _ => {}
+                    }
+                })
+                .on_tray_icon_event(|tray_icon, event| {
+                    if let TrayIconEvent::Click {
+                        button: MouseButton::Left,
+                        button_state: MouseButtonState::Up,
+                        ..
+                    } = event
+                    {
+                        let app = tray_icon.app_handle();
+                        if let Some(window) = app.get_webview_window("main") {
+                            let _ = window.unminimize();
+                            let _ = window.show();
+                            let _ = window.set_focus();
+                        }
+                    }
+                })
+                .build(app)?;
+
             Ok(())
+        })
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                // 点击关闭时隐藏到托盘，而不是退出
+                api.prevent_close();
+                let _ = window.hide();
+            }
         })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

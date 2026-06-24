@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 
-const props = defineProps<{ disabled?: boolean }>();
+const props = defineProps<{ disabled?: boolean; mode?: 'gaokao' | 'fun' }>();
 const emit = defineEmits<{ (e: 'send', content: string): void }>();
 
 const inputText = ref('');
@@ -37,7 +37,7 @@ function autoResize() {
       <textarea
         ref="textareaRef"
         v-model="inputText"
-        placeholder="输入省份、分数、位次，例如：浙江655分位次10500，想学计算机..."
+        :placeholder="mode === 'fun' ? '跟张雪峰聊聊...' : '输入省份、分数、位次，例如：浙江655分位次10500，想学计算机...'"
         :disabled="disabled"
         @keydown="handleKeydown"
         @input="autoResize"
@@ -55,23 +55,27 @@ function autoResize() {
 
 <style scoped>
 .input-box {
-  padding: 8px 20px 16px;
+  padding: 8px 40px;
   flex-shrink: 0;
+  margin-right: 6px;
 }
 
 .input-wrapper {
   display: flex;
   align-items: flex-end;
   gap: 8px;
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
+  background: var(--card);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 8px 8px 8px 16px;
   transition: border-color 0.2s;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
 }
 
 .input-wrapper:focus-within {
-  border-color: var(--primary-color);
+  border-color: var(--primary);
   box-shadow: 0 0 0 2px rgba(208, 64, 64, 0.1);
 }
 
@@ -85,11 +89,11 @@ textarea {
   max-height: 120px;
   line-height: 1.5;
   background: transparent;
-  color: var(--text-color);
+  color: var(--text);
   padding: 4px 0;
 }
 
-textarea::placeholder { color: var(--text-secondary); }
+textarea::placeholder { color: var(--text-muted); }
 textarea:disabled { opacity: 0.5; }
 
 .send-btn {
@@ -97,7 +101,7 @@ textarea:disabled { opacity: 0.5; }
   height: 36px;
   border: none;
   border-radius: 8px;
-  background: var(--primary-color);
+  background: var(--primary);
   color: #fff;
   cursor: pointer;
   display: flex;
@@ -120,7 +124,7 @@ textarea:disabled { opacity: 0.5; }
 
 .input-hint {
   font-size: 11px;
-  color: var(--text-secondary);
+  color: var(--text-muted);
   text-align: center;
   margin-top: 6px;
   opacity: 0.6;

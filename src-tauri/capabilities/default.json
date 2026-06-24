@@ -2,9 +2,17 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "默认权限",
-  "windows": ["main"],
+  "windows": ["main", "settings", "software-settings"],
   "permissions": [
     "core:default",
-    "opener:default"
+    "core:webview:allow-create-webview-window",
+    "core:window:allow-set-focus",
+    "core:window:allow-show",
+    "core:window:allow-hide",
+    "core:window:allow-close",
+    "opener:default",
+    "opener:allow-open-url",
+    "opener:allow-open-path",
+    "updater:default"
   ]
 }

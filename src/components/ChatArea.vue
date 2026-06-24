@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch, nextTick } from 'vue';
+import MarkdownRenderer from './MarkdownRenderer.vue';
 import type { ChatMessage } from '../types';
 
 const props = defineProps<{
@@ -19,24 +20,14 @@ function getRoleName(msg: ChatMessage): string {
   return props.mode === 'fun' ? '张雪峰' : '顾问';
 }
 
-function formatContent(content: string): string {
-  return content
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/`(.*?)`/g, '<code>$1</code>');
-}
-
 watch(() => props.messages.length, async () => {
   await nextTick();
-  if (scrollRef.value) {
-    scrollRef.value.scrollTop = scrollRef.value.scrollHeight;
-  }
+  if (scrollRef.value) scrollRef.value.scrollTop = scrollRef.value.scrollHeight;
 });
 
 watch(() => props.isLoading, async () => {
   await nextTick();
-  if (scrollRef.value) {
-    scrollRef.value.scrollTop = scrollRef.value.scrollHeight;
-  }
+  if (scrollRef.value) scrollRef.value.scrollTop = scrollRef.value.scrollHeight;
 });
 </script>
 
@@ -53,11 +44,12 @@ watch(() => props.isLoading, async () => {
       <div
         v-for="(msg, index) in messages"
         :key="index"
-        class="message"
+        class="message dark"
         :class="msg.role === 'user' ? 'user' : 'assistant'"
       >
-        <div class="role">{{ getRoleName(msg) }}</div>
-        <div class="content" v-html="formatContent(msg.content)"></div>
+        <div v-if="msg.role !== 'user'" class="role">{{ getRoleName(msg) }}</div>
+        <div v-if="msg.role === 'user'" class="content">{{ msg.content }}</div>
+        <MarkdownRenderer v-else :content="msg.content" class="content" />
       </div>
 
       <div v-if="isLoading" class="message assistant loading">
@@ -81,41 +73,32 @@ watch(() => props.isLoading, async () => {
   scroll-behavior: smooth;
 }
 
-.chat-area.fun-mode {
-  background-image: url('/img_scifi.png');
-  background-position: left center;
-  background-size: 45%;
-  background-repeat: no-repeat;
-}
-
-.chat-area.fun-mode > * { position: relative; z-index: 1; }
-
 .welcome {
   text-align: center;
   margin-top: 120px;
-  color: var(--text-secondary);
+  color: var(--text-muted);
   user-select: none;
 }
 
 .welcome .icon { font-size: 52px; margin-bottom: 16px; }
-.welcome h2 { font-size: 20px; margin-bottom: 8px; color: var(--text-color); }
+.welcome h2 { font-size: 20px; margin-bottom: 8px; color: var(--text); }
 .welcome p { font-size: 13px; }
 
 .messages {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
+  width: 100%;
   max-width: 800px;
   margin: 0 auto;
 }
 
 .message {
-  max-width: 80%;
+  max-width: 100%;
   padding: 12px 16px;
   border-radius: 12px;
   font-size: 13.5px;
-  line-height: 1.75;
-  white-space: pre-wrap;
+  line-height: 1.5;
   word-break: break-word;
   animation: fadeIn 0.2s ease;
 }
@@ -126,36 +109,27 @@ watch(() => props.isLoading, async () => {
 }
 
 .message.user {
-  background: var(--primary-color);
+  background: var(--primary);
   color: #fff;
   margin-left: auto;
   border-bottom-right-radius: 4px;
 }
 
 .message.assistant {
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
+  background: var(--card);
+  border: 1px solid var(--border);
   border-bottom-left-radius: 4px;
 }
 
 .role {
-  font-size: 10px;
-  opacity: 0.5;
-  margin-bottom: 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 16px;
+  font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
 
-.content { white-space: pre-wrap; }
-.content :deep(strong) { font-weight: 600; }
-.content :deep(code) {
-  background: rgba(0,0,0,0.06);
-  padding: 1px 5px;
-  border-radius: 3px;
-  font-size: 12px;
-}
-
-.dark .content :deep(code) { background: rgba(255,255,255,0.1); }
+.message.user .content { white-space: pre-wrap; }
 
 .loading .dots { display: flex; gap: 4px; padding: 4px 0; }
 
@@ -164,7 +138,7 @@ watch(() => props.isLoading, async () => {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--text-secondary);
+  background: var(--text-muted);
   animation: dot 1.4s infinite;
 }
 

@@ -25,3 +25,16 @@ export interface ExtractedInfo {
   schools: string[];
   keywords: string[];
 }
+
+export interface ServiceProvider {
+  name: string;
+  url: string;
+  keyUrl?: string;
+  models: ModelInfo[];
+}
+
+export interface ModelInfo {
+  id: string;
+  name: string;
+  description?: string;
+}

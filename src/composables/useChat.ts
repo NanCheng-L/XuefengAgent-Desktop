@@ -1,6 +1,7 @@
 import { ref, reactive, computed } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
 import type { Chat, ChatMessage, ApiConfig, ExtractedInfo } from '../types';
+import { DEFAULT_CONFIG } from '../utils/providers';
 
 const STORAGE_KEY_CHATS = 'xf_chats';
 const STORAGE_KEY_CURRENT = 'xf_cur';
@@ -47,9 +48,9 @@ export function useChat() {
   const isLoading = ref(false);
   const dbReady = ref(false);
   const config = reactive<ApiConfig>({
-    url: 'https://api.deepseek.com',
+    url: DEFAULT_CONFIG.url,
     key: '',
-    model: 'deepseek-chat',
+    model: DEFAULT_CONFIG.model,
     tavily: ''
   });
 
@@ -117,6 +118,13 @@ export function useChat() {
 
   function setMode(newMode: 'gaokao' | 'fun') {
     mode.value = newMode;
+    // 找到该模式下的最新对话，没有就新建
+    const modeChats = Object.values(chats).filter(c => c.mode === newMode);
+    if (modeChats.length > 0) {
+      currentId.value = modeChats[modeChats.length - 1].id;
+    } else {
+      createChat();
+    }
     saveToStorage();
   }
 
@@ -164,8 +172,9 @@ export function useChat() {
     return info;
   }
 
-  async function queryLocalDB(info: ExtractedInfo): Promise<string> {
-    if (!info.province || (!info.rank && !info.score)) return '';
+  async function queryLocalDB(info: ExtractedInfo): Promise<{ dbData: string; dbResult: any }> {
+    const empty = { dbData: '', dbResult: null };
+    if (!info.province || (!info.rank && !info.score)) return empty;
     try {
       const j: any = await invoke('recommend', {
         province: info.province,
@@ -173,7 +182,7 @@ export function useChat() {
         rank: info.rank,
         score: info.score,
       });
-      if (!j.chong?.length && !j.wen?.length && !j.bao?.length) return '';
+      if (!j.chong?.length && !j.wen?.length && !j.bao?.length) return empty;
       let dbData = `【本地数据库·冲稳保推荐】位次${j.rank}\n`;
       if (j.chong?.length) {
         dbData += '\n▎冲 (录取位次高于你，可以试试):\n';
@@ -193,69 +202,142 @@ export function useChat() {
           dbData += `· ${d.school} ${d.major} ${d.year}年 最低${d.score || '?'}分 位次${d.rank || '?'}\n`;
         });
       }
-      return dbData;
+      return { dbData, dbResult: j };
     } catch (e) {
       console.warn('DB查询失败:', e);
-      return '';
+      return empty;
     }
+  }
+
+  async function searchWeb(query: string): Promise<string[]> {
+    if (config.tavily) {
+      try {
+        const r = await fetch('https://api.tavily.com/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${config.tavily}` },
+          body: JSON.stringify({ query, search_depth: 'basic', include_answer: true, max_results: 3 }),
+        });
+        if (r.ok) {
+          const d = await r.json();
+          const results: string[] = [];
+          if (d.answer) results.push(`[Tavily总结] ${d.answer}`);
+          if (d.results) {
+            for (const item of d.results.slice(0, 3)) {
+              if (item.title && item.content) results.push(`${item.title}: ${(item.content || '').slice(0, 300)}`);
+            }
+          }
+          if (results.length) return results;
+        }
+      } catch { }
+    }
+    try {
+      const j: any = await invoke('search_baidu', { query });
+      if (j.results?.length) return j.results;
+    } catch { }
+    return [];
   }
 
   async function queryData(text: string): Promise<string> {
     const info = extractInfo(text);
 
-    // AI提取
     if (config.key) {
       try {
         const xp = `从用户的高考咨询消息中提取信息。返回JSON:{"province":"","rank":0,"score":0,"majors":[],"schools":[],"keywords":[]}。只返回JSON。用户消息: ${text}`;
-        const r = await fetch(`${config.url.replace(/\/+$/, '')}/v1/chat/completions`, {
+        const base = config.url.replace(/\/+$/, '');
+        const chatUrl = base.endsWith('/v1') ? `${base}/chat/completions` : `${base}/v1/chat/completions`;
+        const r = await fetch(chatUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${config.key}` },
           body: JSON.stringify({ model: config.model || 'deepseek-chat', messages: [{ role: 'user', content: xp }], temperature: 0, max_tokens: 250 })
         });
         if (r.ok) {
           const d = await r.json();
-          const raw = d.choices[0].message.content.replace(/```/g, '').replace(/json/g, '').trim();
-          const ai = JSON.parse(raw);
-          if (ai.province) info.province = ai.province;
-          if (ai.rank) info.rank = parseInt(ai.rank);
-          if (ai.score) info.score = parseInt(ai.score);
-          if (ai.majors?.length) info.majors = ai.majors;
-          if (ai.schools?.length) info.schools = ai.schools;
-          if (ai.keywords?.length) info.keywords = ai.keywords;
+          const raw = (d.choices?.[0]?.message?.content || '').replace(/```/g, '').replace(/json/g, '').trim();
+          if (raw) {
+            const ai = JSON.parse(raw);
+            if (ai.province) info.province = ai.province;
+            if (ai.rank) info.rank = parseInt(ai.rank);
+            if (ai.score) info.score = parseInt(ai.score);
+            if (ai.majors?.length) info.majors = ai.majors;
+            if (ai.schools?.length) info.schools = ai.schools;
+            if (ai.keywords?.length) info.keywords = ai.keywords;
+          }
         }
       } catch (e) { console.warn('AI提取失败:', e); }
     }
 
-    // 本地数据库查询（Rust 后端）
     let dbData = '';
-    if (dbReady.value) {
-      dbData = await queryLocalDB(info);
+    let dbResult: any = null;
+    const dbSkip = !info.province || (!info.rank && !info.score);
+    if (dbReady.value && !dbSkip) {
+      const r = await queryLocalDB(info);
+      dbData = r.dbData;
+      dbResult = r.dbResult;
     }
 
-    // Tavily 联网搜索
     let webData = '';
-    if (config.tavily) {
-      try {
-        const queries: string[] = [];
-        if (info.majors.length && info.province) {
-          queries.push(`${info.province} 2025年 ${info.majors[0]}专业 录取位次`);
+    try {
+      const queries: string[] = [];
+
+      if (dbResult) {
+        const dbSchools: string[] = [];
+        if (dbResult.chong) dbResult.chong.slice(0, 5).forEach((d: any) => dbSchools.push(d.school));
+        if (dbResult.wen) dbResult.wen.slice(0, 5).forEach((d: any) => dbSchools.push(d.school));
+        if (dbResult.bao) dbResult.bao.slice(0, 5).forEach((d: any) => dbSchools.push(d.school));
+        for (const s of dbSchools) {
+          queries.push(`${s} ${info.province} 2025录取分数线位次 王牌专业`);
         }
-        for (const q of queries.slice(0, 2)) {
-          const result: any = await invoke('search_tavily', {
-            query: q,
-            apiKey: config.tavily,
-            maxResults: 3,
-          });
-          if (result.results?.length) {
-            webData += result.results.join('\n') + '\n';
-          }
+      }
+
+      if (info.majors.length && info.province) {
+        queries.push(`${info.province} 2025年 ${info.majors[0]}专业 录取位次 本科批`);
+        if (info.rank) {
+          queries.push(`${info.province} ${info.rank}位次 2025 能报哪些大学 ${info.majors.join(' ')}`);
         }
-      } catch (e) { console.warn('Tavily搜索失败:', e); }
-    }
+      }
+
+      if (info.majors.length) {
+        queries.push(`${info.majors[0]}专业 2025 2026 就业前景 薪资 行业趋势`);
+      }
+
+      if (info.keywords?.length) {
+        for (let i = 0; i < Math.min(2, info.keywords.length); i++) queries.push(info.keywords[i]);
+      }
+
+      if (dbSkip) {
+        queries.push(`${text} 高考志愿 推荐学校 录取分数线`);
+        queries.push(`${text} 高考 位次 能报哪些大学`);
+        if (info.majors.length) queries.push(`${info.majors.join(' ')}专业 就业前景`);
+        if (info.schools.length) queries.push(`${info.schools[0]} 录取分数线 2025`);
+      }
+
+      const seenQ: Record<string, boolean> = {};
+      const finalQ: string[] = [];
+      for (const q of queries) {
+        if (!seenQ[q]) { seenQ[q] = true; finalQ.push(q); }
+      }
+
+      const allResults: string[] = [];
+      for (let b = 0; b < finalQ.length; b += 5) {
+        const batch = finalQ.slice(b, b + 5);
+        const batchResults = await Promise.all(batch.map(q => searchWeb(q)));
+        for (const r of batchResults) allResults.push(...r);
+      }
+
+      const seen: Record<string, boolean> = {};
+      const unique: string[] = [];
+      for (const r of allResults) {
+        const k = r.slice(0, 50);
+        if (!seen[k]) { seen[k] = true; unique.push(r); }
+      }
+      if (unique.length) {
+        webData = '【联网搜索·仅供参考】\n' + unique.slice(0, 15).map(w => `· ${w.slice(0, 300)}`).join('\n') + '\n';
+      }
+    } catch (e) { console.warn('联网搜索失败:', e); }
 
     let result = `[查询参数] 省份=${info.province} 位次=${info.rank} 分数=${info.score} 专业=${info.majors.join(',')}\n`;
     if (dbData) result += dbData + '\n';
-    if (webData) result += `【联网搜索·仅供参考】\n${webData}\n`;
+    if (webData) result += webData + '\n';
     return result;
   }
 
@@ -290,7 +372,9 @@ export function useChat() {
         messages.push(chat.messages[i]);
       }
 
-      const r = await fetch(`${config.url.replace(/\/+$/, '')}/v1/chat/completions`, {
+      const base2 = config.url.replace(/\/+$/, '');
+      const chatUrl2 = base2.endsWith('/v1') ? `${base2}/chat/completions` : `${base2}/v1/chat/completions`;
+      const r = await fetch(chatUrl2, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${config.key}` },
         body: JSON.stringify({ model: config.model || 'deepseek-chat', messages, temperature: 0.7 })
@@ -313,6 +397,15 @@ export function useChat() {
     loadFromStorage();
     if (!currentId.value || !chats[currentId.value]) createChat();
     checkDb();
+
+    // 监听设置窗口的配置更新
+    import('@tauri-apps/api/event').then(({ listen }) => {
+      listen('config-updated', (e: any) => {
+        if (e.payload) {
+          Object.assign(config, e.payload);
+        }
+      });
+    });
   }
 
   return {

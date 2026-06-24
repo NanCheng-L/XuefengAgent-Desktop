@@ -7,6 +7,7 @@ const props = defineProps<{
   currentId: string;
   mode: 'gaokao' | 'fun';
   dbReady: boolean;
+  hasUpdate?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -31,8 +32,12 @@ function getPreview(chat: Chat): string {
 <template>
   <aside class="sidebar">
     <div class="sidebar-header">
-      <h2>雪峰Agent</h2>
-      <span class="version">v2.3</span>
+      <img src="/icon.png" class="app-icon" alt="icon">
+      <div class="sidebar-header-text">
+        <h2>雪峰Agent</h2>
+        <span class="version">v0.1.0</span>
+        <span v-if="hasUpdate" class="update-badge">NEW</span>
+      </div>
     </div>
     <div class="subtitle">AI高考志愿顾问</div>
 
@@ -59,8 +64,8 @@ function getPreview(chat: Chat): string {
 <style scoped>
 .sidebar {
   width: 260px;
-  background: var(--sidebar-bg);
-  border-right: 1px solid var(--border-color);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
@@ -68,9 +73,22 @@ function getPreview(chat: Chat): string {
 
 .sidebar-header {
   display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 18px 2px;
+}
+
+.app-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.sidebar-header-text {
+  display: flex;
   align-items: baseline;
   gap: 6px;
-  padding: 18px 18px 2px;
 }
 
 .sidebar-header h2 {
@@ -80,14 +98,25 @@ function getPreview(chat: Chat): string {
 
 .version {
   font-size: 11px;
-  color: var(--text-secondary);
+  color: var(--text-muted);
+}
+
+.update-badge {
+  font-size: 9px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--danger);
+  padding: 1px 5px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+  margin-left: 4px;
 }
 
 .subtitle {
   font-size: 11px;
-  color: var(--text-secondary);
+  color: var(--text-muted);
   padding: 0 18px 14px;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border);
 }
 
 .chat-list {
@@ -113,8 +142,8 @@ function getPreview(chat: Chat): string {
   transition: background 0.15s;
 }
 
-.chat-item:hover { background: var(--card-bg); }
-.chat-item.active { background: var(--primary-color); color: #fff; }
+.chat-item:hover { background: var(--card); }
+.chat-item.active { background: var(--primary); color: #fff; }
 
 .chat-name { flex: 1; overflow: hidden; text-overflow: ellipsis; }
 
@@ -133,7 +162,7 @@ function getPreview(chat: Chat): string {
 .empty-hint {
   text-align: center;
   padding: 30px 0;
-  color: var(--text-secondary);
+  color: var(--text-muted);
   font-size: 12px;
 }
 
@@ -141,7 +170,7 @@ function getPreview(chat: Chat): string {
   margin: 8px 10px 14px;
   padding: 9px;
   text-align: center;
-  border: 1px dashed var(--border-color);
+  border: 1px dashed var(--border);
   border-radius: 8px;
   cursor: pointer;
   font-size: 13px;
@@ -150,8 +179,8 @@ function getPreview(chat: Chat): string {
 }
 
 .new-chat-btn:hover {
-  background: var(--card-bg);
-  border-color: var(--primary-color);
-  color: var(--primary-color);
+  background: var(--card);
+  border-color: var(--primary);
+  color: var(--primary);
 }
 </style>
