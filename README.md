@@ -26,6 +26,7 @@
 - **深色/浅色主题**: 参考喵咪麦克配色，跟随主题切换
 - **多服务商**: 预设 DeepSeek、小米 MiMo、通义千问、智谱 GLM 等 9 家服务商
 - **独立设置窗口**: API 设置、软件设置（关于、会话管理、更新检查）
+- **志愿填报模拟**: 独立窗口，河南格式48个志愿，支持专业代码选择（1954个专业）、Excel导入导出
 - **系统托盘**: 关闭窗口隐藏到托盘，不退出
 - **自动更新**: 基于 GitHub Releases 的更新检查
 
@@ -76,15 +77,16 @@ pnpm tauri build                 # 构建安装包
 ```
 ├── src/                        # 前端源码
 │   ├── App.vue                 # 主布局
-│   ├── components/             # 组件（TopBar、Sidebar、ChatArea、InputBox、UpdateChecker）
-│   ├── views/                  # 独立窗口（SettingsPage、SoftwareSettingsPage）
+│   ├── components/             # 组件（TopBar、Sidebar、ChatArea、InputBox、UpdateChecker、MajorSelect）
+│   ├── views/                  # 独立窗口（SettingsPage、SoftwareSettingsPage、VacationPage）
 │   ├── composables/            # useChat（聊天+数据管线）
 │   └── utils/providers.ts      # 服务商预设
 ├── src-tauri/                  # Rust 后端
 │   ├── src/lib.rs              # SQLite 查询 + 百度搜索 + Tavily
-│   └── resources/              # 录取数据库
+│   └── resources/              # 录取数据库 + 专业代码表
 ├── settings.html               # API 设置窗口入口
-└── settings-page.html          # 软件设置窗口入口
+├── settings-page.html          # 软件设置窗口入口
+└── vacation.html               # 志愿填报模拟窗口入口
 ```
 
 ## 免责声明

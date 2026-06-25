@@ -39,14 +39,16 @@ vue-tsc --noEmit                # TypeScript 类型检查
 
 - `App.vue` — 主布局，精简到 ~90 行
 - `components/` — 组件
-  - `TopBar.vue` — 顶部栏（模型显示、模式切换、主题、设置按钮）
+  - `TopBar.vue` — 顶部栏（模型显示、模式切换、主题、设置按钮、志愿草表入口）
   - `Sidebar.vue` — 左侧对话列表
   - `ChatArea.vue` — 聊天消息区域（v-md-preview 渲染 markdown）
   - `InputBox.vue` — 输入框
   - `UpdateChecker.vue` — 更新检查组件
+  - `MajorSelect.vue` — 专业代码选择器（支持输入+下拉选择，1954个专业）
 - `views/` — 独立窗口页面
   - `SettingsPage.vue` — API 设置窗口
   - `SoftwareSettingsPage.vue` — 软件设置窗口
+  - `VacationPage.vue` — 志愿填报模拟页面（河南格式，48个志愿）
 - `composables/` — 组合式函数
   - `useChat.ts` — 聊天状态管理、AI 数据管线、数据库查询
 - `utils/providers.ts` — 服务商预设配置（DeepSeek、小米 MiMo、通义千问等）
@@ -57,12 +59,14 @@ vue-tsc --noEmit                # TypeScript 类型检查
 - `lib.rs` — Rust 后端（SQLite 查询、百度搜索、Tavily 搜索、系统托盘）
 - `main.rs` — 入口
 - `resources/admission_clean.db.gz` — 录取数据库（运行时自动解压）
+- `resources/majors.json` — 专业代码对照表（1954个专业：普通本科833+专科801+职教本科320）
 
 ## 多窗口架构
 
 - **主窗口** — 聊天界面
 - **settings** — API 设置（`settings.html` → `settings-main.ts` → `SettingsPage.vue`）
 - **software-settings** — 软件设置（`settings-page.html` → `settings-page-main.ts` → `SoftwareSettingsPage.vue`）
+- **vacation-form** — 志愿填报模拟（`vacation.html` → `vacation-main.ts` → `VacationPage.vue`）
 
 窗口间通信：设置窗口保存后通过 Tauri 事件 `config-updated` 通知主窗口。
 

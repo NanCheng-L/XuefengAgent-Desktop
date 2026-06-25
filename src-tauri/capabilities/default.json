@@ -18,6 +18,12 @@
     "dialog:allow-save",
     "fs:default",
     "fs:allow-write-file",
-    "fs:allow-read-file"
+    "fs:allow-exists",
+    {
+      "identifier": "fs:allow-read-file",
+      "allow": [
+        { "path": "$RESOURCE/**" }
+      ]
+    }
   ]
 }

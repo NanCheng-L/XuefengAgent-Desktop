@@ -1,8 +1,36 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import * as XLSX from 'xlsx';
 import { save as saveDialog, open as openFileDialog } from '@tauri-apps/plugin-dialog';
 import { writeFile as tauriWriteFile, readFile as tauriReadFile } from '@tauri-apps/plugin-fs';
+import MajorSelect from '../components/MajorSelect.vue';
+
+// 初始化主题
+const savedTheme = localStorage.getItem('xf_theme');
+if (savedTheme === 'dark') {
+  document.documentElement.dataset.theme = 'dark';
+} else {
+  delete document.documentElement.dataset.theme;
+}
+
+function onStorage(e: StorageEvent) {
+  if (e.key === 'xf_theme' && e.newValue) {
+    if (e.newValue === 'dark') {
+      document.documentElement.dataset.theme = 'dark';
+    } else {
+      delete document.documentElement.dataset.theme;
+    }
+  }
+}
+
+onMounted(() => {
+  load();
+  window.addEventListener('storage', onStorage);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('storage', onStorage);
+});
 
 const STORAGE_KEY = 'xf_vacation_data';
 const DEFAULT_COUNT = 48;
@@ -157,9 +185,6 @@ async function importExcel() {
   }
 }
 
-onMounted(() => {
-  load();
-});
 </script>
 
 <template>
@@ -204,12 +229,12 @@ onMounted(() => {
               <td class="td-index" rowspan="2">{{ i + 1 }}</td>
               <td class="td-label-cell"><div class="cell-inner"><span class="td-label">院校代号：</span><input v-model="row.schoolCode" @change="onCellChange"></div></td>
               <td class="td-label-cell td-name" colspan="2"><div class="cell-inner"><span class="td-label">名称：</span><input v-model="row.schoolName" @change="onCellChange"></div></td>
-              <td class="td-label-cell"><div class="cell-inner"><span class="td-label">专业1代号：</span><input v-model="row.majorCode1" @change="onCellChange"></div></td>
-              <td class="td-label-cell td-name"><div class="cell-inner"><span class="td-label">名称：</span><input v-model="row.majorName1" @change="onCellChange"></div></td>
-              <td class="td-label-cell"><div class="cell-inner"><span class="td-label">专业3代号：</span><input v-model="row.majorCode3" @change="onCellChange"></div></td>
-              <td class="td-label-cell td-name"><div class="cell-inner"><span class="td-label">名称：</span><input v-model="row.majorName3" @change="onCellChange"></div></td>
-              <td class="td-label-cell"><div class="cell-inner"><span class="td-label">专业5代号：</span><input v-model="row.majorCode5" @change="onCellChange"></div></td>
-              <td class="td-label-cell td-name"><div class="cell-inner"><span class="td-label">名称：</span><input v-model="row.majorName5" @change="onCellChange"></div></td>
+              <td class="td-label-cell"><div class="cell-inner"><span class="td-label">专业1代号：</span><MajorSelect :code="row.majorCode1" :name="row.majorName1" @update:code="row.majorCode1 = $event; onCellChange()" @update:name="row.majorName1 = $event; onCellChange()"></MajorSelect></div></td>
+              <td class="td-label-cell td-name"><div class="cell-inner"><span class="td-label">名称：</span><input :value="row.majorName1" @input="row.majorName1 = ($event.target as HTMLInputElement).value; onCellChange()" ></div></td>
+              <td class="td-label-cell"><div class="cell-inner"><span class="td-label">专业3代号：</span><MajorSelect :code="row.majorCode3" :name="row.majorName3" @update:code="row.majorCode3 = $event; onCellChange()" @update:name="row.majorName3 = $event; onCellChange()"></MajorSelect></div></td>
+              <td class="td-label-cell td-name"><div class="cell-inner"><span class="td-label">名称：</span><input :value="row.majorName3" @input="row.majorName3 = ($event.target as HTMLInputElement).value; onCellChange()" ></div></td>
+              <td class="td-label-cell"><div class="cell-inner"><span class="td-label">专业5代号：</span><MajorSelect :code="row.majorCode5" :name="row.majorName5" @update:code="row.majorCode5 = $event; onCellChange()" @update:name="row.majorName5 = $event; onCellChange()"></MajorSelect></div></td>
+              <td class="td-label-cell td-name"><div class="cell-inner"><span class="td-label">名称：</span><input :value="row.majorName5" @input="row.majorName5 = ($event.target as HTMLInputElement).value; onCellChange()" ></div></td>
               <td class="td-obey" rowspan="2">
                 <label class="obey-option"><input type="radio" :name="'obey' + i" value="是" v-model="row.majorObedience" @change="onCellChange"> 是</label>
                 <label class="obey-option"><input type="radio" :name="'obey' + i" value="否" v-model="row.majorObedience" @change="onCellChange"> 否</label>
@@ -218,12 +243,12 @@ onMounted(() => {
             <!-- 第二行：专业组号 | 专业2/4/6 -->
             <tr>
               <td class="td-label-cell td-group" colspan="3"><div class="cell-inner"><span class="td-label">专业组号：</span><input v-model="row.groupCode" @change="onCellChange"></div></td>
-              <td class="td-label-cell"><div class="cell-inner"><span class="td-label">专业2代号：</span><input v-model="row.majorCode2" @change="onCellChange"></div></td>
-              <td class="td-label-cell td-name"><div class="cell-inner"><span class="td-label">名称：</span><input v-model="row.majorName2" @change="onCellChange"></div></td>
-              <td class="td-label-cell"><div class="cell-inner"><span class="td-label">专业4代号：</span><input v-model="row.majorCode4" @change="onCellChange"></div></td>
-              <td class="td-label-cell td-name"><div class="cell-inner"><span class="td-label">名称：</span><input v-model="row.majorName4" @change="onCellChange"></div></td>
-              <td class="td-label-cell"><div class="cell-inner"><span class="td-label">专业6代号：</span><input v-model="row.majorCode6" @change="onCellChange"></div></td>
-              <td class="td-label-cell td-name"><div class="cell-inner"><span class="td-label">名称：</span><input v-model="row.majorName6" @change="onCellChange"></div></td>
+              <td class="td-label-cell"><div class="cell-inner"><span class="td-label">专业2代号：</span><MajorSelect :code="row.majorCode2" :name="row.majorName2" @update:code="row.majorCode2 = $event; onCellChange()" @update:name="row.majorName2 = $event; onCellChange()"></MajorSelect></div></td>
+              <td class="td-label-cell td-name"><div class="cell-inner"><span class="td-label">名称：</span><input :value="row.majorName2" @input="row.majorName2 = ($event.target as HTMLInputElement).value; onCellChange()" ></div></td>
+              <td class="td-label-cell"><div class="cell-inner"><span class="td-label">专业4代号：</span><MajorSelect :code="row.majorCode4" :name="row.majorName4" @update:code="row.majorCode4 = $event; onCellChange()" @update:name="row.majorName4 = $event; onCellChange()"></MajorSelect></div></td>
+              <td class="td-label-cell td-name"><div class="cell-inner"><span class="td-label">名称：</span><input :value="row.majorName4" @input="row.majorName4 = ($event.target as HTMLInputElement).value; onCellChange()" ></div></td>
+              <td class="td-label-cell"><div class="cell-inner"><span class="td-label">专业6代号：</span><MajorSelect :code="row.majorCode6" :name="row.majorName6" @update:code="row.majorCode6 = $event; onCellChange()" @update:name="row.majorName6 = $event; onCellChange()"></MajorSelect></div></td>
+              <td class="td-label-cell td-name"><div class="cell-inner"><span class="td-label">名称：</span><input :value="row.majorName6" @input="row.majorName6 = ($event.target as HTMLInputElement).value; onCellChange()" ></div></td>
             </tr>
           </template>
         </tbody>
