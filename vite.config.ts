@@ -20,6 +20,7 @@ export default defineConfig(async () => ({
         main: resolve(__dirname, "index.html"),
         settings: resolve(__dirname, "settings.html"),
         "settings-page": resolve(__dirname, "settings-page.html"),
+        vacation: resolve(__dirname, "vacation.html"),
       },
     },
   },

@@ -42,6 +42,22 @@ async function openSettings() {
   } catch (e) { console.error('打开设置窗口失败:', e); }
 }
 
+async function openVacationForm() {
+  try {
+    const existing = await WebviewWindow.getByLabel('vacation-form');
+    if (existing) {
+      try { await existing.show(); await existing.setFocus(); return; } catch {}
+    }
+    const isDev = location.hostname === 'localhost';
+    const baseUrl = isDev ? 'http://localhost:5180' : 'tauri://localhost';
+    new WebviewWindow('vacation-form', {
+      url: `${baseUrl}/vacation.html`,
+      title: '志愿填报模拟 - 雪峰Agent',
+      width: 1200, height: 760, minWidth: 900, minHeight: 500, center: true,
+    });
+  } catch (e) { console.error('打开志愿填报窗口失败:', e); }
+}
+
 async function openSoftwareSettings() {
   try {
     const existing = await WebviewWindow.getByLabel('software-settings');
@@ -103,6 +119,7 @@ onUnmounted(() => {
     <div class="status-dot" :class="{ db: dbReady }" :title="dbReady ? '数据库已加载' : '数据库加载中...'"></div>
     <button class="theme-btn" @click="handleToggleTheme">{{ isDark ? '🌙' : '☀️' }}</button>
     <button class="api-btn" @click="openSettings">API设置</button>
+    <button class="vacation-btn" @click="openVacationForm">志愿草表</button>
     <button class="settings-btn" @click="openSoftwareSettings">⚙</button>
   </header>
 </template>
@@ -189,6 +206,7 @@ onUnmounted(() => {
 
 .theme-btn,
 .api-btn,
+.vacation-btn,
 .settings-btn {
   padding: 5px 12px;
   border: 1px solid var(--border);
@@ -214,6 +232,17 @@ onUnmounted(() => {
 
 .api-btn:hover {
   background: var(--primary-hover);
+}
+
+.vacation-btn {
+  background: var(--surface);
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+.vacation-btn:hover {
+  background: var(--primary);
+  color: #fff;
 }
 
 .settings-btn {
