@@ -5729,7 +5729,7 @@ dependencies = [
 
 [[package]]
 name = "xuefeng-agent-desktop"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "flate2",
  "reqwest 0.12.28",

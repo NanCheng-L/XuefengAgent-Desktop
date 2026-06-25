@@ -1,6 +1,6 @@
 [package]
 name = "xuefeng-agent-desktop"
-version = "0.1.1"
+version = "0.1.2"
 description = "雪峰Agent桌面版 — AI高考志愿顾问"
 authors = ["you"]
 edition = "2021"
