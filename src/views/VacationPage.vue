@@ -334,6 +334,8 @@ body {
   flex: 1;
   overflow: auto;
   padding: 0;
+  margin: 10px;
+  border: 1px solid var(--border);
 }
 
 .vacation-table-wrap::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -347,6 +349,7 @@ body {
   border-collapse: separate;
   border-spacing: 0;
   font-size: 12px;
+  margin: -1px;
 }
 
 .vacation-table th {
