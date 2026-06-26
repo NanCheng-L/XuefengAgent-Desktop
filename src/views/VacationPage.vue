@@ -34,6 +34,7 @@ onUnmounted(() => {
 
 const STORAGE_KEY = 'xf_vacation_data';
 const DEFAULT_COUNT = 48;
+const rowCount = ref(DEFAULT_COUNT);
 
 interface VacationRow {
   schoolCode: string;
@@ -74,6 +75,7 @@ function load() {
       const data = JSON.parse(saved);
       if (Array.isArray(data) && data.length > 0) {
         rows.value = data;
+        rowCount.value = data.length;
       }
     }
   } catch {}
@@ -87,19 +89,46 @@ function save() {
 
 function restoreDefault() {
   rows.value = createDefaultRows();
+  rowCount.value = DEFAULT_COUNT;
   save();
 }
 
 function addRow() {
   rows.value.push(createEmptyRow());
+  rowCount.value = rows.value.length;
   save();
 }
 
 function removeRow() {
   if (rows.value.length > 1) {
     rows.value.pop();
+    rowCount.value = rows.value.length;
     save();
   }
+}
+
+function onRowCountChange() {
+  let count = rowCount.value;
+  if (isNaN(count) || count < 1) {
+    count = 1;
+  }
+  adjustRowCount(count);
+}
+
+function adjustRowCount(count: number) {
+  const currentCount = rows.value.length;
+  
+  if (count > currentCount) {
+    const rowsToAdd = count - currentCount;
+    for (let i = 0; i < rowsToAdd; i++) {
+      rows.value.push(createEmptyRow());
+    }
+  } else if (count < currentCount) {
+    rows.value = rows.value.slice(0, count);
+  }
+  
+  rowCount.value = rows.value.length;
+  save();
 }
 
 function onCellChange() {
@@ -193,6 +222,14 @@ async function importExcel() {
       <span class="toolbar-title">志愿填报模拟</span>
       <span class="toolbar-count">{{ rows.length }} 个志愿</span>
       <div class="toolbar-actions">
+        <input 
+          type="number" 
+          v-model.number="rowCount" 
+          min="1"
+          class="row-count-input"
+          @blur="onRowCountChange"
+          @keydown.enter="onRowCountChange"
+        >
         <button @click="restoreDefault">恢复默认</button>
         <button @click="addRow">+ 添加</button>
         <button @click="removeRow" :disabled="rows.length <= 1">- 减少</button>
@@ -328,6 +365,27 @@ body {
 
 .toolbar-actions .btn-primary:hover {
   opacity: 0.9;
+}
+
+.row-count-input {
+  width: 60px;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
+  font-size: 12px;
+  color: var(--text);
+  text-align: center;
+}
+
+.row-count-input:focus {
+  border-color: var(--primary);
+  outline: none;
+}
+
+.row-count-input::-webkit-inner-spin-button,
+.row-count-input::-webkit-outer-spin-button {
+  opacity: 1;
 }
 
 .vacation-table-wrap {
