@@ -411,12 +411,14 @@ body {
 }
 
 .vacation-table th {
-  background: var(--surface);
+  background: color-mix(in srgb, var(--primary) 12%, var(--bg));
+  color: var(--text);
   border: 1px solid var(--border);
   padding: 6px 10px;
   font-weight: 600;
   white-space: nowrap;
   text-align: center;
+  vertical-align: middle;
   font-size: 13px;
   position: sticky;
   z-index: 2;
@@ -448,9 +450,9 @@ body {
 
 .vacation-table td.td-index {
   text-align: center;
+  vertical-align: middle;
   font-weight: 700;
   color: var(--text-muted);
-  background: var(--surface);
   min-width: 36px;
   font-size: 13px;
 }
@@ -507,7 +509,6 @@ body {
 .vacation-table td.td-obey {
   text-align: center;
   vertical-align: middle;
-  background: var(--surface);
   min-width: 64px;
 }
 
